@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from calc import TireCalculator
 
 class TireCalculatorApp:
     def __init__(self, root):
@@ -7,6 +8,7 @@ class TireCalculatorApp:
         self.root.title("Шинный калькулятор")
         self.root.geometry("400x350")
 
+        self.calculator = TireCalculator()
         self.create_widgets()
 
     def create_widgets(self):
@@ -41,9 +43,22 @@ class TireCalculatorApp:
             label.grid(row=i, column=0, columnspan=3)
 
     def calculate(self):
-        self.result_labels["Диаметр"].config(text="Разница в диаметре: 10 мм")
-        self.result_labels["Клиренс"].config(text="Изменение клиренса: 5 мм")
-        self.result_labels["Скорость"].config(text="Отклонение скорости: 3 км/ч")
+        try:
+            old_values = [float(entry.get()) for entry in self.old_entries]
+            new_values = [float(entry.get()) for entry in self.new_entries]
+
+            old_diameter = self.calculator.calc_diameter(*old_values)
+            new_diameter = self.calculator.calc_diameter(*new_values)
+
+            clearance_change = self.calculator.calc_clearance_change(old_diameter, new_diameter)
+            speed_diff = self.calculator.calc_speed_difference(old_diameter, new_diameter, 100)
+
+            self.result_labels["Диаметр"].config(text=f"Разница в диаметре: {abs(old_diameter - new_diameter):.2f} мм")
+            self.result_labels["Клиренс"].config(text=f"Изменение клиренса: {clearance_change:.2f} мм")
+            self.result_labels["Скорость"].config(text=f"Отклонение скорости: {speed_diff:.2f} км/ч")
+
+        except ValueError:
+            messagebox.showerror("Ошибка", "Введите корректные числовые значения!")
 
     def reset_fields(self):
         for entry in self.old_entries + self.new_entries:
