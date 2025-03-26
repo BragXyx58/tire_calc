@@ -6,13 +6,13 @@ class TireCalculatorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Шинный калькулятор")
-        self.root.geometry("400x350")
+        self.root.geometry("400x450")
 
         self.calculator = TireCalculator()
         self.create_widgets()
 
     def create_widgets(self):
-        labels = ["Ширина (мм)", "Профиль (%)", "Диаметр (дюймы)"]
+        labels = ["Ширина (мм)", "Профиль (%)", "Диаметр (дюймы)", "Вылет диска (ET)", "Ширина диска (мм)"]
         self.old_entries = []
         self.new_entries = []
 
@@ -30,8 +30,8 @@ class TireCalculatorApp:
 
         calc_button = tk.Button(self.root, text="Рассчитать", command=self.calculate)
         reset_button = tk.Button(self.root, text="Сбросить", command=self.reset_fields)
-        calc_button.grid(row=5, column=0, columnspan=2, pady=10)
-        reset_button.grid(row=5, column=2, pady=10)
+        calc_button.grid(row=6, column=0, columnspan=2, pady=10)
+        reset_button.grid(row=6, column=2, pady=10)
 
         self.result_labels = {
             "Диаметр": tk.Label(self.root, text="Результаты будут тут"),
@@ -39,19 +39,23 @@ class TireCalculatorApp:
             "Скорость": tk.Label(self.root, text="Результаты будут тут")
         }
 
-        for i, label in enumerate(self.result_labels.values(), start=6):
+        for i, label in enumerate(self.result_labels.values(), start=7):
             label.grid(row=i, column=0, columnspan=3)
 
     def calculate(self):
         try:
-            old_values = [float(entry.get()) for entry in self.old_entries]
-            new_values = [float(entry.get()) for entry in self.new_entries]
-
-            old_diameter = self.calculator.calc_diameter(*old_values)
-            new_diameter = self.calculator.calc_diameter(*new_values)
-
-            clearance_change = self.calculator.calc_clearance_change(old_diameter, new_diameter)
-            speed_diff = self.calculator.calc_speed_difference(old_diameter, new_diameter, 100)
+            old_values = [float(entry.get()) for entry in self.old_entries[:3]]
+            new_values = [float(entry.get()) for entry in self.new_entries[:3]]
+            old_et = float(self.old_entries[3].get())
+            new_et = float(self.new_entries[3].get())
+            old_rim_width = float(self.old_entries[4].get())
+            new_rim_width = float(self.new_entries[4].get())
+            old_diameter = self.calculator.calculate_diameter(*old_values)
+            new_diameter = self.calculator.calculate_diameter(*new_values)
+            old_diameter = self.calculator.adjust_diameter_for_rim(old_diameter, old_et, old_rim_width)
+            new_diameter = self.calculator.adjust_diameter_for_rim(new_diameter, new_et, new_rim_width)
+            clearance_change = self.calculator.calculate_clearance_change(old_diameter, new_diameter)
+            speed_diff = self.calculator.calculate_speed_difference(old_diameter, new_diameter, 100)
 
             self.result_labels["Диаметр"].config(text=f"Разница в диаметре: {abs(old_diameter - new_diameter):.2f} мм")
             self.result_labels["Клиренс"].config(text=f"Изменение клиренса: {clearance_change:.2f} мм")
@@ -66,7 +70,7 @@ class TireCalculatorApp:
         for label in self.result_labels.values():
             label.config(text="Результаты будут тут")
 
-
-root = tk.Tk()
-app = TireCalculatorApp(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TireCalculatorApp(root)
+    root.mainloop()
